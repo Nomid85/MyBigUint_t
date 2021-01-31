@@ -99,23 +99,16 @@ class MyBigUint{
 
 
 public:
-    /*class Div_Error
-    {
-    public:
-        Div_Error() {
-            std::cout<<"Division by zero!"<<std::endl;
-        }
-    };*/
 
     MyBigUint(){
-        number.reserve(MyBigUint::DataSize);
-        number.assign(number.size(),0);
-        while(!((number.size() > 1) && (!(((number.size())&(number.size()-1))))))
+        
+        while (number.size() < MyBigUint::DataSize)   
             number.push_back(0);
         N = std::log2(number.size());
     }
 
     MyBigUint(const std::vector<uint64_t> & a):number(a){
+        
         while (number.size() < MyBigUint::DataSize) {
             number.push_back(0);
         }
@@ -128,7 +121,9 @@ public:
         }
 
     void print(){
+
         auto it = number.begin();
+        
         while(it != number.end()){
             std::cout<< *it<<" ";
             it++;
@@ -136,31 +131,40 @@ public:
         std::cout<<std::endl;
     }
 
-    void push (const uint64_t & a){
-        number.push_back(a);
+    std::vector<uint64_t> getNumber(){
+
+        return number;
     }
 
-    void setN(int n){
-        N=n;
+    size_t size(){
+
+        return number.size();
     }
 
     void setNumber(const std::vector<uint64_t> & a){
+        
         number=a;
+        
         while (number.size() < MyBigUint::DataSize) {
             number.push_back(0);
         }
+        
         while (number.size() > MyBigUint::DataSize) {
             number.pop_back();
         }
+        
         while(!((number.size() > 1) && (!(((number.size())&(number.size()-1))))))
             number.push_back(0);
+        
         N = std::log2(number.size());
     }
 
 
     bool operator < (const MyBigUint & b){
+        
         std::vector<uint64_t> t_a = number;
         std::vector<uint64_t> t_b = b.number;
+        
         for (int i =t_a.size()-1; i>=0; --i){
             if(t_a[i] < t_b[i])
                 return true;
@@ -171,13 +175,17 @@ public:
     }
 
     MyBigUint& operator = (uint64_t b){
+        
         number = {b,0};
+        
         return *this;
     }
 
     bool operator > (const MyBigUint & b){
+        
         std::vector<uint64_t> t_a = number;
         std::vector<uint64_t> t_b = b.number;
+        
         for (int i =t_a.size()-1; i>=0; --i){
             if(t_a[i] > t_b[i])
                 return true;
@@ -188,8 +196,10 @@ public:
     }
 
     bool operator == (const MyBigUint & b){
+        
         std::vector<uint64_t> t_a = number;
         std::vector<uint64_t> t_b = b.number;
+        
         for (int i =t_a.size()-1; i>=0; --i){
             if(t_a[i] != t_b[i])
                 return false;
@@ -197,9 +207,16 @@ public:
         return true;
     }
 
+    bool operator != (const MyBigUint & b){
+
+        return !(*this == b);
+    }
+
     MyBigUint operator + (uint64_t a){
+        
         std::vector<uint64_t> tmp = {a,0};
         MyBigUint mn(tmp);
+        
         return *this + mn;
     }
 
@@ -226,8 +243,10 @@ public:
         return MyBigUint(tmp);
     }
     MyBigUint operator - (uint64_t a){
+        
         std::vector<uint64_t> tmp = {a,0};
         MyBigUint mn(tmp);
+        
         return *this - mn;
     }
 
@@ -257,18 +276,16 @@ public:
         // Представим вектора как коэффиценты многоченов A и B
         // По свойству DFT(A*B) = DFT(A) * DFT(B) => A * B = invDFT(A*B)
 
-        //a.setN(N);
         std::vector<uint64_t> res(2*number.size());
         std::vector<uint64_t> res1(number.size());
         std::complex<long double> *m1 = new std::complex<long double> [2*number.size()];
         std::complex<long double> *m2 = new std::complex<long double> [2*number.size()];
 
 
-        for(uint i =0; i < 2*number.size();i=i+2 ){
+        for(uint i = 0; i < 2*number.size(); i = i + 2 ){
+           
             m1[i].real(number[i/2]%MyBigUint::BASE);
-           //std::cout<<i<<std::endl;
             m1[i+1].real(number[i/2]/MyBigUint::BASE);
-            //std::cout<<number[i+1];
             m2[i].real(a.number[i/2]%MyBigUint::BASE);
             m2[i+1].real(a.number[i/2]/MyBigUint::BASE);
         }
@@ -281,6 +298,7 @@ public:
         }
 
         fft(m1,FT_INVERSE,2*number.size(),N+1);
+        
         for(uint i =0; i < 2*number.size();i++ ){
             res[i]= (uint64_t)(m1[i].real() + 0.5);
         }
@@ -293,13 +311,16 @@ public:
     }
 
     MyBigUint operator * (uint64_t b){
+        
         std::vector<uint64_t> tmp ={b,0};
         MyBigUint mn(tmp);
+        
         return *this * mn;
     }
 
 //Деление
     MyBigUint operator /(uint64_t b){
+       
         std::vector<uint64_t> d_a = number;
         uint64_t  high=0;
         uint64_t low=0;
@@ -312,17 +333,17 @@ public:
 
         if(b == 1)
             return *this;
-        for (int i =d_a.size()-1; i>=0; --i){
-            high =d_a[i]/MyBigUint::BASE;
-            low = d_a[i]%MyBigUint::BASE;
-            high+=curry*MyBigUint::BASE;
-            ost = high%b;
-            high/=b;
-            low+=ost*MyBigUint::BASE;
-            ost= low%b;
-            low/=b;
-            d_a[i]=(high)*MyBigUint::BASE +low;
-            curry= ost;
+        for (int i = d_a.size()-1; i>=0; --i){
+            high = d_a[i] / MyBigUint::BASE;
+            low = d_a[i] % MyBigUint::BASE;
+            high += curry * MyBigUint::BASE;
+            ost = high % b;
+            high /= b;
+            low += ost * MyBigUint::BASE;
+            ost = low % b;
+            low /= b;
+            d_a[i] = high * MyBigUint::BASE +low;
+            curry = ost;
 
         }
         return MyBigUint(d_a);
@@ -339,7 +360,7 @@ public:
         uint64_t ost = 0;
         std::vector<uint64_t> tmp_a;
         std::vector<uint64_t> tmp_b;
-        std::vector<uint64_t> one={1,0};
+        std::vector<uint64_t> one = {1,0};
 
 
         if( *this == b){
@@ -356,8 +377,9 @@ public:
 
 
 
-        if (d_a.size() < d_b.size())
+        if (*this < b){
             return MyBigUint();
+        }
 
         if ((d_a.size() == 1) && (d_a[0] ==0))
             return MyBigUint();
@@ -367,17 +389,17 @@ public:
 
         if((d_b.size() == 1) && (d_b[0] != 0)){
 
-            for (int i =d_a.size()-1; i>=0; --i){
-                high =d_a[i]/MyBigUint::BASE;
-                low = d_a[i]%MyBigUint::BASE;
-                high+=curry*MyBigUint::BASE;
-                ost = high%d_b[0];
-                high/=d_b[0];
-                low+=ost*MyBigUint::BASE;
-                ost= low%d_b[0];
-                low/=d_b[0];
-                d_a[i]=(high)*MyBigUint::BASE +low;
-                curry= ost;
+            for (int i = d_a.size()-1; i>=0; --i){
+                high = d_a[i] / MyBigUint::BASE;
+                low = d_a[i] % MyBigUint::BASE;
+                high += curry * MyBigUint::BASE;
+                ost = high % d_b[0];
+                high /= d_b[0];
+                low += ost * MyBigUint::BASE;
+                ost = low % d_b[0];
+                low /= d_b[0];
+                d_a[i] = high * MyBigUint::BASE + low;
+                curry = ost;
 
             }
             return MyBigUint(d_a);
@@ -390,17 +412,17 @@ public:
 
         dvr = d_b[d_b.size()-1];
         curry=0;
-        for (uint i =d_a.size()-1; i>=d_b.size()-1; --i){
-            high =tmp_a[i]/MyBigUint::BASE;
-            low = tmp_a[i]%MyBigUint::BASE;
-            high+=curry*MyBigUint::BASE;
-            ost = high%dvr;
-            high/=dvr;
-            low+=ost*MyBigUint::BASE;
-            ost= low%dvr;
-            low/=dvr;
-            tmp_a[i]=(high)*MyBigUint::BASE +low;
-            curry= ost;
+        for (uint i = d_a.size()-1; i>=d_b.size()-1; --i){
+            high = tmp_a[i] / MyBigUint::BASE;
+            low = tmp_a[i] % MyBigUint::BASE;
+            high += curry * MyBigUint::BASE;
+            ost = high % dvr;
+            high /= dvr;
+            low += ost * MyBigUint::BASE;
+            ost = low % dvr;
+            low /= dvr;
+            tmp_a[i] =high * MyBigUint::BASE + low;
+            curry = ost;
          }
          while(tmp_a.size()>(d_a.size()-d_b.size() + 1))
                tmp_a.erase(tmp_a.begin());
@@ -411,6 +433,7 @@ public:
 //Остаток
 
     MyBigUint operator % (uint64_t b){
+        
         std::vector<uint64_t> d_a = number;
         uint64_t  high=0;
         uint64_t low=0;
@@ -424,16 +447,16 @@ public:
         if(b == 1)
             return *this;
         for (int i =d_a.size()-1; i>=0; --i){
-            high =d_a[i]/MyBigUint::BASE;
-            low = d_a[i]%MyBigUint::BASE;
-            high+=curry*MyBigUint::BASE;
-            ost = high%b;
-            high/=b;
-            low+=ost*MyBigUint::BASE;
-            ost= low%b;
-            low/=b;
-            d_a[i]=(high)*MyBigUint::BASE +low;
-            curry= ost;
+            high = d_a[i] / MyBigUint::BASE;
+            low = d_a[i] % MyBigUint::BASE;
+            high += curry * MyBigUint::BASE;
+            ost = high % b;
+            high /= b;
+            low += ost * MyBigUint::BASE;
+            ost = low % b;
+            low /= b;
+            d_a[i] = high * MyBigUint::BASE + low;
+            curry = ost;
 
         }
         tmp_a = {ost,0};
@@ -441,13 +464,14 @@ public:
 
     }
 
-    MyBigUint operator % (MyBigUint & b){
+    MyBigUint operator % (const MyBigUint & b){
+        
         std::vector<uint64_t> d_a = number;
         std::vector<uint64_t> d_b = b.number;
         std::vector<uint64_t> buf;
-        uint64_t  high=0;
-        uint64_t low=0;
-        uint64_t curry =0;
+        uint64_t  high = 0;
+        uint64_t low = 0;
+        uint64_t curry = 0;
         uint64_t ost = 0;
 
         while(!d_a.back() && d_a.size()>1){
@@ -461,29 +485,34 @@ public:
             return MyBigUint();
         }
 
-        if (*this < b)
-            return b - *this;
+        if (*this < b){
+            MyBigUint res = b;
+            return res - *this;
+        }
 
+        if((d_b.size() == 1) && (d_b[0] == 1))
+
+            return *this;
 
         if((d_b.size() == 1) && (d_b[0] == 0))
             throw std::domain_error("Division by zero!");
 
         if((d_b.size() == 1) && (d_b[0] != 0)){
 
-            for (int i =d_a.size()-1; i>=0; --i){
-                high =d_a[i]/MyBigUint::BASE;
-                low = d_a[i]%MyBigUint::BASE;
-                high+=curry*MyBigUint::BASE;
-                ost = high%d_b[0];
-                high/=d_b[0];
-                low+=ost*MyBigUint::BASE;
-                ost= low%d_b[0];
-                low/=d_b[0];
-                d_a[i]=(high)*MyBigUint::BASE +low;
-                curry= ost;
+            for (int i = d_a.size()-1; i>=0; --i){
+                high = d_a[i] / MyBigUint::BASE;
+                low = d_a[i] % MyBigUint::BASE;
+                high += curry * MyBigUint::BASE;
+                ost = high % d_b[0];
+                high /= d_b[0];
+                low += ost * MyBigUint::BASE;
+                ost= low % d_b[0];
+                low /= d_b[0];
+                d_a[i] = high * MyBigUint::BASE + low;
+                curry = ost;
 
             }
-            d_b[0]=curry;
+            d_b[0] = curry;
             return MyBigUint(d_b);
         }
         MyBigUint rzn;
@@ -493,28 +522,24 @@ public:
         std::vector<uint64_t> tmp_a = d_a;
 
         dvr = d_b[d_b.size()-1];
-        curry=0;
-        for (int i =d_a.size()-1; i>=d_b.size()-1; --i){
-            high =tmp_a[i]/MyBigUint::BASE;
-            low = tmp_a[i]%MyBigUint::BASE;
-            high+=curry*MyBigUint::BASE;
-            ost = high%dvr;
-            high/=dvr;
-            low+=ost*MyBigUint::BASE;
-            ost= low%dvr;
-            low/=dvr;
-            tmp_a[i]=(high)*MyBigUint::BASE +low;
-            curry= ost;
+        curry = 0;
+        for (uint i = d_a.size()-1; i>=d_b.size()-1; --i){
+            high = tmp_a[i] / MyBigUint::BASE;
+            low = tmp_a[i] % MyBigUint::BASE;
+            high += curry * MyBigUint::BASE;
+            ost = high % dvr;
+            high /= dvr;
+            low += ost * MyBigUint::BASE;
+            ost = low % dvr;
+            low /= dvr;
+            tmp_a[i] = high * MyBigUint::BASE + low;
+            curry = ost;
          }
-         while(tmp_a.size()>(d_a.size()-d_b.size() + 1))
+         while(tmp_a.size() > (d_a.size()-d_b.size() + 1))
                tmp_a.erase(tmp_a.begin());
-         std::cout<<tmp_a.size()<<std::endl;
          mul1.setNumber(tmp_a);
          mul2.setNumber(d_b);
          rzn = mul2 - mul1;
          return rzn;
-
-
-
     }
 };
